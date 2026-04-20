@@ -11,9 +11,9 @@ fetch:
 	mkdir -p ${CHART_DIR}/templates
 	mkdir -p $(CHART_DIR)/crds
 ifeq ($(CHART_VERSION),latest)
-	curl -sS https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml > ${CHART_DIR}/templates/resource.yaml
+	curl -sSL https://github.com/tektoncd/pipeline/releases/latest/download/release.yaml > ${CHART_DIR}/templates/resource.yaml
 else
-	curl -sS https://storage.googleapis.com/tekton-releases/pipeline/previous/v${CHART_VERSION}/release.yaml > ${CHART_DIR}/templates/resource.yaml
+	curl -sSL https://github.com/tektoncd/pipeline/releases/download/v${CHART_VERSION}/release.yaml > ${CHART_DIR}/templates/resource.yaml
 endif
 	jx gitops split -d ${CHART_DIR}/templates
 	jx gitops rename -d ${CHART_DIR}/templates
@@ -35,8 +35,25 @@ endif
 	# Move content of data: from git-resolver-config-cm.yaml to gitResolverConfig: in values.yaml
 	yq -i '.gitResolverConfig = load("$(CHART_DIR)/templates/git-resolver-config-cm.yaml").data' $(CHART_DIR)/values.yaml
 	yq -i '.data = null' $(CHART_DIR)/templates/git-resolver-config-cm.yaml
+	# Extract image values from release into values.yaml
+	yq -i '.controller.deployment.image = load("$(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml").spec.template.spec.containers[0].image' $(CHART_DIR)/values.yaml
+	yq -i '.controller.images.entrypoint = (load("$(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml").spec.template.spec.containers[0].args | . as $$a | (to_entries[] | select(.value == "-entrypoint-image") | .key + 1) as $$i | $$a[$$i])' $(CHART_DIR)/values.yaml
+	yq -i '.controller.images.nop = (load("$(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml").spec.template.spec.containers[0].args | . as $$a | (to_entries[] | select(.value == "-nop-image") | .key + 1) as $$i | $$a[$$i])' $(CHART_DIR)/values.yaml
+	yq -i '.controller.images.sidecarlogresults = (load("$(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml").spec.template.spec.containers[0].args | . as $$a | (to_entries[] | select(.value == "-sidecarlogresults-image") | .key + 1) as $$i | $$a[$$i])' $(CHART_DIR)/values.yaml
+	yq -i '.controller.images.workingdirinit = (load("$(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml").spec.template.spec.containers[0].args | . as $$a | (to_entries[] | select(.value == "-workingdirinit-image") | .key + 1) as $$i | $$a[$$i])' $(CHART_DIR)/values.yaml
+	yq -i '.controller.images.shellImage = (load("$(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml").spec.template.spec.containers[0].args | . as $$a | (to_entries[] | select(.value == "-shell-image") | .key + 1) as $$i | $$a[$$i])' $(CHART_DIR)/values.yaml
+	yq -i '.controller.images.shellImageWin = (load("$(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml").spec.template.spec.containers[0].args | . as $$a | (to_entries[] | select(.value == "-shell-image-win") | .key + 1) as $$i | $$a[$$i])' $(CHART_DIR)/values.yaml
+	yq -i '.webhook.deployment.image = load("$(CHART_DIR)/templates/tekton-pipelines-webhook-deploy.yaml").spec.template.spec.containers[0].image' $(CHART_DIR)/values.yaml
+	yq -i '.remoteresolver.deployment.image = load("$(CHART_DIR)/templates/tekton-pipelines-remote-resolvers-deploy.yaml").spec.template.spec.containers[0].image' $(CHART_DIR)/values.yaml
+	yq -i '.eventscontroller.deployment.image = load("$(CHART_DIR)/templates/tekton-events-controller-deploy.yaml").spec.template.spec.containers[0].image' $(CHART_DIR)/values.yaml
 	# Remove image: from tekton-pipelines-controller-deploy
 	yq -i 'del(.spec.template.spec.containers[].image)' $(CHART_DIR)/templates/tekton-pipelines-controller-deploy.yaml
+	# Remove image: from tekton-pipelines-webhook-deploy
+	yq -i 'del(.spec.template.spec.containers[].image)' $(CHART_DIR)/templates/tekton-pipelines-webhook-deploy.yaml
+	# Remove image: from tekton-pipelines-remote-resolvers-deploy
+	yq -i 'del(.spec.template.spec.containers[].image)' $(CHART_DIR)/templates/tekton-pipelines-remote-resolvers-deploy.yaml
+	# Remove image: from tekton-events-controller-deploy
+	yq -i 'del(.spec.template.spec.containers[].image)' $(CHART_DIR)/templates/tekton-events-controller-deploy.yaml
 	# Make node affinity configurable
 	yq -i '.webhook.affinity.nodeAffinity = load("$(CHART_DIR)/templates/tekton-pipelines-webhook-deploy.yaml").spec.template.spec.affinity.nodeAffinity' $(CHART_DIR)/values.yaml
 	yq -i 'del(.spec.template.spec.affinity.nodeAffinity)' $(CHART_DIR)/templates/tekton-pipelines-webhook-deploy.yaml
@@ -55,7 +72,7 @@ endif
 	find $(CHART_DIR)/templates -type f -name "*aggregate*clusterrole.yaml" -exec sh -c 'sed -i.bak "1s/{{- if .Values.createClusterRoles }}/{{- if and .Values.createAggregateRoles .Values.createClusterRoles }}/" "$$1" && rm "$$1.bak"' _ {} \;
 	cp src/templates/* ${CHART_DIR}/templates
 ifneq ($(CHART_VERSION),latest)
-	sed -i.bak "s/^appVersion:.*/appVersion: ${CHART_VERSION}/" ${CHART_DIR}/Chart.yaml
+	sed -i.bak "s/^appVersion:.*/appVersion: ${CHART_VERSION}/" ${CHART_DIR}/Chart.yaml && rm ${CHART_DIR}/Chart.yaml.bak
 endif
 
 version:

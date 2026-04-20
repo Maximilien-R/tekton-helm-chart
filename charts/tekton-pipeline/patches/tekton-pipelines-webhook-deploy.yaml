@@ -27,6 +27,8 @@ spec:
         - secretRef:
             name: "{{ .Values.webhook.envFromSecret }}"
             optional: true
+      helmTemplateRemoveMe: |
+        image: {{ .Values.webhook.deployment.image }}
       nodeSelector:
         helmTemplateRemoveMe: |
           {{- with .Values.webhook.nodeSelector }}

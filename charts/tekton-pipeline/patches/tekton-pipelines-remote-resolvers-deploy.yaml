@@ -27,3 +27,5 @@ spec:
               {{- with .Values.remoteresolver.resources }}
                 {{- toYaml . | trim | nindent 10 }}
               {{- end }}
+      helmTemplateRemoveMe: |
+        image: {{ .Values.remoteresolver.deployment.image }}

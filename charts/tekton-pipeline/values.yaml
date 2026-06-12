@@ -52,6 +52,9 @@ controller:
   tolerations: []
   nodeSelector: {}
   resources: {}
+  # Secrets used to pull the controller image from a private registry.
+  imagePullSecrets: []
+  # - name: my-registry-secret
 # Values for tekton-pipelines-webhook
 webhook:
   deployment:
@@ -73,6 +76,9 @@ webhook:
                   - windows
   tolerations: []
   nodeSelector: {}
+  # Secrets used to pull the webhook image from a private registry.
+  imagePullSecrets: []
+  # - name: my-registry-secret
 # Values to amend tekton-pipelines-remote-resolvers
 remoteresolver:
   deployment:
@@ -87,10 +93,16 @@ remoteresolver:
     limits:
       cpu: 1000m
       memory: 4Gi
+  # Secrets used to pull the resolvers image from a private registry.
+  imagePullSecrets: []
+  # - name: my-registry-secret
 # Values for tekton-events-controller
 eventscontroller:
   deployment:
     image: ghcr.io/tektoncd/pipeline/events-a9042f7efb0cbade2a868a1ee5ddd52c:v1.12.2@sha256:facd8325f8cf78f63d5e687faaed5cc2c0d4111da72464083ceff00a7e0b3c56
+  # Secrets used to pull the events controller image from a private registry.
+  imagePullSecrets: []
+  # - name: my-registry-secret
 # configuration to put in the config-defaults ConfigMap
 configDefaults:
   _example: |

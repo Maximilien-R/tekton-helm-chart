@@ -5,6 +5,11 @@ metadata:
 spec:
   template:
     spec:
+      imagePullSecrets:
+        helmTemplateRemoveMe: |
+          {{- with .Values.eventscontroller.imagePullSecrets }}
+            {{- toYaml . | nindent 6 }}
+          {{- end }}
       containers:
       - name: tekton-events-controller
       helmTemplateRemoveMe: |

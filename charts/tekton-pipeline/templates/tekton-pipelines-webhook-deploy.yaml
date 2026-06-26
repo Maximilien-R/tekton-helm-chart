@@ -127,6 +127,10 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         image: {{ .Values.webhook.deployment.image }}
+      imagePullSecrets:
+          {{- with .Values.webhook.imagePullSecrets }}
+            {{- toYaml . | nindent 6 }}
+          {{- end }}
       nodeSelector:
           {{- with .Values.webhook.nodeSelector }}
             {{- toYaml . |  nindent 8 }}

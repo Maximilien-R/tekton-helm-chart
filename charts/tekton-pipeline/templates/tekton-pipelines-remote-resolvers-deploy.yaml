@@ -108,6 +108,10 @@ spec:
         - mountPath: /tmp
           name: tmp-clone-volume
         image: {{ .Values.remoteresolver.deployment.image }}
+      imagePullSecrets:
+          {{- with .Values.remoteresolver.imagePullSecrets }}
+            {{- toYaml . | nindent 6 }}
+          {{- end }}
       nodeSelector:
           {{- with .Values.remoteresolver.nodeSelector }}
             {{- toYaml . |  nindent 8 }}

@@ -142,6 +142,10 @@ spec:
         - mountPath: /etc/config-registry-cert
           name: config-registry-cert
         image: {{ .Values.controller.deployment.image }}
+      imagePullSecrets:
+          {{- with .Values.controller.imagePullSecrets }}
+            {{- toYaml . | nindent 6 }}
+          {{- end }}
       nodeSelector:
           {{- with .Values.controller.nodeSelector }}
             {{- toYaml . |  nindent 8 }}

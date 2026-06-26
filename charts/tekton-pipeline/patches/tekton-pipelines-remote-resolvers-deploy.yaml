@@ -5,6 +5,11 @@ metadata:
 spec:
   template:
     spec:
+      imagePullSecrets:
+        helmTemplateRemoveMe: |
+          {{- with .Values.remoteresolver.imagePullSecrets }}
+            {{- toYaml . | nindent 6 }}
+          {{- end }}
       affinity:
         helmTemplateRemoveMe: |
           {{- with .Values.remoteresolver.affinity }}
